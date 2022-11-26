@@ -50,6 +50,8 @@
 		let title = document.getElementById("title-place").innerHTML + " | " + route[route.length - 1]
 		title = title.replace("-", " ").replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
 		document.title = title
+	}else {
+		document.title = document.getElementById("title-place").innerHTML
 	}
 </script>
 
