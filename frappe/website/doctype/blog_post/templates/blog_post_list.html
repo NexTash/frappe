@@ -46,12 +46,13 @@
 
 	let route = document.location.pathname
 	route = route.split("/")
+	
 	if(route.length > 2){
-		let title = document.getElementById("title-place").innerHTML + " | " + route[route.length - 1]
+		let title = "Neu Ocean Technologies" + " | " + route[route.length - 1]
 		title = title.replace("-", " ").replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
 		document.title = title
 	}else {
-		document.title = document.getElementById("title-place").innerHTML
+		document.title = "Neu Ocean Technologies | Breaking news about Neu Ocean and its products"
 	}
 </script>
 
