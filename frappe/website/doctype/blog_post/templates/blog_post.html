@@ -10,7 +10,7 @@
 		<!-- begin blog content -->
 		<div class="blog-header">
 			<div>
-				<a class="mr-2" href="/blog">{{ _('Blog') }}</a>
+				<a class="mr-2" href="/news">{{ _('News') }}</a>
 				<span class="text-muted">/</span>
 				<a class="ml-2" href="/{{ category.route }}">{{ category.title }}</a>
 			</div>
@@ -74,5 +74,12 @@
 </div>
 <script>
 	frappe.ready(() => frappe.set_search_path("/blog"))
+
+	let a = document.querySelectorAll("a")
+
+	for (const row of a) {
+		if(row && row.href)
+		row.href = row.href.replace("/blog", "/news")
+	}
 </script>
 {% endblock %}

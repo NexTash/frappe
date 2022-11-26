@@ -1,5 +1,5 @@
 {% extends "templates/web.html" %}
-{% block title %}{{ blog_title or _("Blog") }}{% endblock %}
+{% block title %}{% endblock %}
 {% block hero %}{% endblock %}
 
 {% block page_content %}
@@ -15,6 +15,7 @@
 	css_class="py-5"
 ) }}
 
+<span id="title-place" hidden>{{ blog_title or _("News") }}</span>
 <div class="blog-list-content">
 	<div class="website-list" data-doctype="{{ doctype }}" data-txt="{{ txt or '[notxt]' | e }}">
 		{% if not result -%}
@@ -34,5 +35,22 @@
 {% endblock %}
 
 {% block script %}
-<script>{% include "templates/includes/list/list.js" %}</script>
+<script>
+	{% include "templates/includes/list/list.js" %}
+	let a = document.querySelectorAll("a")
+
+	for (const row of a) {
+		if(row && row.href)
+		row.href = row.href.replace("/blog", "/news")
+	}
+
+	let route = document.location.pathname
+	route = route.split("/")
+	if(route.length > 2){
+		let title = document.getElementById("title-place").innerHTML + " | " + route[route.length - 1]
+		title = title.replace("-", " ").replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
+		document.title = title
+	}
+</script>
+
 {% endblock %}

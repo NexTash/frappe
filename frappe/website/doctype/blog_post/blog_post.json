@@ -206,7 +206,7 @@
  "is_published_field": "published",
  "links": [],
  "make_attachments_public": 1,
- "modified": "2022-08-25 07:10:08.620136",
+ "modified": "2022-11-26 13:33:57.083540",
  "modified_by": "Administrator",
  "module": "Website",
  "name": "Blog Post",
@@ -235,7 +235,7 @@
    "write": 1
   }
  ],
- "route": "blog",
+ "route": "news",
  "sort_field": "modified",
  "sort_order": "ASC",
  "title_field": "title",
