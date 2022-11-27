@@ -46,8 +46,8 @@
 
 	let route = document.location.pathname
 	route = route.split("/")
-	
-	if(route.length > 2){
+
+	if(route.length > 3){
 		let title = "Neu Ocean Technologies" + " | " + route[route.length - 1]
 		title = title.replace("-", " ").replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
 		document.title = title
