@@ -49,7 +49,9 @@
 		<div>
 			{% if social_links %}
 				{% for link in social_links %}
-					<a href="{{ link.link }}" class="text-muted ml-2 fa fa-{{ link.icon }}" target="_blank"></a>
+					<a href="{{ link.link }}" class="text-muted ml-2" target="_blank">
+						<i class="{{ link.icon }}"></i>
+					</a>
 				{% endfor %}
 			{% endif %}
 		</div>

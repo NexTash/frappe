@@ -145,19 +145,19 @@ class BlogPost(WebsiteGenerator):
 	def fetch_social_links_info(self):
 		if not frappe.db.get_single_value("Blog Settings", "enable_social_sharing", cache=True):
 			return []
-
+		
 		url = frappe.local.site + "/" + self.route
 
 		social_links = [
 			{
-				"icon": "twitter",
+				"icon": "fa-brands fa-twitter",
 				"link": "https://twitter.com/intent/tweet?text=" + self.title + "&url=" + url,
 			},
-			{"icon": "facebook", "link": "https://www.facebook.com/sharer.php?u=" + url},
-			{"icon": "linkedin", "link": "https://www.linkedin.com/sharing/share-offsite/?url=" + url},
-			{"icon": "envelope", "link": "mailto:?subject=" + self.title + "&body=" + url},
+			{"icon": "fa-brands fa-facebook", "link": "https://www.facebook.com/sharer.php?u=" + url},
+			{"icon": "fa-brands fa-linkedin", "link": "https://www.linkedin.com/sharing/share-offsite/?url=" + url},
+			{"icon": "fa fa-envelope", "link": "mailto:?subject=" + self.title + "&body=" + url},
 		]
-
+		
 		return social_links
 
 	def load_comments(self, context):
