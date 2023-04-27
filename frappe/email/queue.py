@@ -402,14 +402,17 @@ def return_unsubscribed_page(email, doctype, name):
 
 def flush(from_test=False):
 	"""flush email queue, every time: called from scheduler"""
-	# additional check
+	from frappe.utils.background_jobs import get_jobs
 
 	auto_commit = not from_test
 	if frappe.are_emails_muted():
 		msgprint(_("Emails are muted"))
 		from_test = True
 
-	smtpserver_dict = frappe._dict()
+	try:
+		queued_jobs = set(get_jobs(site=frappe.local.site, key="job_name")[frappe.local.site])
+	except Exception:
+		queued_jobs = set()
 
 	for email in get_queue():
 
@@ -417,24 +420,22 @@ def flush(from_test=False):
 			break
 
 		if email.name:
-			smtpserver = smtpserver_dict.get(email.sender)
-			if not smtpserver:
-				smtpserver = SMTPServer()
-				smtpserver_dict[email.sender] = smtpserver
+			job_name = f"email_queue_sendmail_{email.name}"
 
 			if from_test:
-				send_one(email.name, smtpserver, auto_commit)
+				send_one(email.name, auto_commit)
 			else:
+				if job_name in queued_jobs:
+					frappe.logger().debug(f"Not queueing job {job_name} because it is in queue already")
+					continue
+
 				send_one_args = {
 					"email": email.name,
-					"smtpserver": smtpserver,
 					"auto_commit": auto_commit,
 				}
-				enqueue(method="frappe.email.queue.send_one", queue="short", **send_one_args)
-
-		# NOTE: removing commit here because we pass auto_commit
-		# finally:
-		# 	frappe.db.commit()
+				enqueue(
+					method="frappe.email.queue.send_one", queue="short", job_name=job_name, **send_one_args
+				)
 
 
 def get_queue():
@@ -625,9 +626,8 @@ def send_one(email, smtpserver=None, auto_commit=True, now=False):
 			print(frappe.get_traceback())
 			raise e
 
-		else:
-			# log to Error Log
-			frappe.log_error("frappe.email.queue.flush")
+		# log to Error Log
+		frappe.log_error(title="frappe.email.queue.flush")
 
 
 def prepare_message(email, recipient, recipients_list):
@@ -642,8 +642,8 @@ def prepare_message(email, recipient, recipients_list):
 		message = message.replace(
 			"<!--email_open_check-->",
 			quopri.encodestring(
-				'<img src="https://{}/api/method/frappe.core.doctype.communication.email.mark_email_as_seen?name={}"/>'.format(
-					frappe.local.site, email.communication
+				'<img src="{}/api/method/frappe.core.doctype.communication.email.mark_email_as_seen?name={}"/>'.format(
+					get_url(), email.communication
 				).encode()
 			).decode(),
 		)
@@ -724,33 +724,26 @@ def prepare_message(email, recipient, recipients_list):
 
 
 def clear_outbox(days=None):
-	"""Remove low priority older than 31 days in Outbox or configured in Log Settings.
-	Note: Used separate query to avoid deadlock
-	"""
-	if not days:
-		days = 31
+	from frappe.query_builder import Interval
+	from frappe.query_builder.functions import Now
 
-	email_queues = frappe.db.sql_list(
-		"""SELECT `name` FROM `tabEmail Queue`
-		WHERE `priority`=0 AND `modified` < (NOW() - INTERVAL '{0}' DAY)""".format(
-			days
-		)
-	)
+	days = days or 31
+	email_queue = frappe.qb.DocType("Email Queue")
+	email_recipient = frappe.qb.DocType("Email Queue Recipient")
 
-	if email_queues:
-		frappe.db.sql(
-			"""DELETE FROM `tabEmail Queue` WHERE `name` IN ({0})""".format(
-				",".join(["%s"] * len(email_queues))
-			),
-			tuple(email_queues),
-		)
+	# Delete queue table
+	(
+		frappe.qb.from_(email_queue).delete().where(email_queue.modified < (Now() - Interval(days=days)))
+	).run()
 
-		frappe.db.sql(
-			"""DELETE FROM `tabEmail Queue Recipient` WHERE `parent` IN ({0})""".format(
-				",".join(["%s"] * len(email_queues))
-			),
-			tuple(email_queues),
-		)
+	# delete child tables, note that this has potential to leave some orphan
+	# child table behind if modified time was later than parent doc (rare).
+	# But it's safe since child table doesn't contain links.
+	(
+		frappe.qb.from_(email_recipient)
+		.delete()
+		.where(email_recipient.modified < (Now() - Interval(days=days)))
+	).run()
 
 
 def set_expiry_for_email_queue():

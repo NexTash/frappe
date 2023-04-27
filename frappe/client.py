@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 import json
 import os
 
-from six import integer_types, iteritems, string_types
+from six import string_types
 
 import frappe
 import frappe.model
@@ -86,6 +86,10 @@ def get(doctype, name=None, filters=None, parent=None):
 		doc = frappe.get_doc(doctype)  # single
 
 	doc.check_permission()
+
+	if frappe.get_system_settings("apply_perm_level_on_api_calls"):
+		doc.apply_fieldlevel_read_permissions()
+
 	return doc.as_dict()
 
 
@@ -348,11 +352,6 @@ def get_js(items):
 		contentpath = os.path.join(frappe.local.sites_path, *src)
 		with open(contentpath, "r") as srcfile:
 			code = frappe.utils.cstr(srcfile.read())
-
-		if frappe.local.lang != "en":
-			messages = frappe.get_lang_dict("jsfile", contentpath)
-			messages = json.dumps(messages)
-			code += "\n\n$.extend(frappe._messages, {})".format(messages)
 
 		out.append(code)
 

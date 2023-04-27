@@ -125,6 +125,7 @@ def run_doc_method(doctype, name, doc_method, **kwargs):
 
 def execute_job(site, method, event, job_name, kwargs, user=None, is_async=True, retry=0):
 	"""Executes job in a worker, performs commit/rollback and logs if there is any error"""
+	retval = None
 	if is_async:
 		frappe.connect(site)
 		if os.environ.get("CI"):
@@ -139,9 +140,11 @@ def execute_job(site, method, event, job_name, kwargs, user=None, is_async=True,
 	else:
 		method_name = cstr(method.__name__)
 
-	frappe.monitor.start("job", method_name, kwargs)
+	for before_job_task in frappe.get_hooks("before_job"):
+		frappe.call(before_job_task, method=method_name, kwargs=kwargs, transaction_type="job")
+
 	try:
-		method(**kwargs)
+		retval = method(**kwargs)
 
 	except (frappe.db.InternalError, frappe.RetryBackgroundJobError) as e:
 		frappe.db.rollback()
@@ -172,9 +175,12 @@ def execute_job(site, method, event, job_name, kwargs, user=None, is_async=True,
 
 	else:
 		frappe.db.commit()
+		return retval
 
 	finally:
-		frappe.monitor.stop()
+		for after_job_task in frappe.get_hooks("after_job"):
+			frappe.call(after_job_task, method=method_name, kwargs=kwargs, result=retval)
+
 		if is_async:
 			frappe.destroy()
 
@@ -193,7 +199,11 @@ def start_worker(queue=None, quiet=False):
 		logging_level = "INFO"
 		if quiet:
 			logging_level = "WARNING"
-		Worker(queues, name=get_worker_name(queue)).work(logging_level=logging_level)
+		Worker(queues, name=get_worker_name(queue)).work(
+			logging_level=logging_level,
+			date_format="%Y-%m-%d %H:%M:%S",
+			log_format="%(asctime)s,%(msecs)03d %(message)s",
+		)
 
 
 def get_worker_name(queue):

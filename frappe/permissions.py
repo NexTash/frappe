@@ -5,6 +5,7 @@ from __future__ import print_function, unicode_literals
 
 import copy
 import json
+from typing import List
 
 from six import string_types
 
@@ -84,6 +85,9 @@ def has_permission(
 
 	if user == "Administrator":
 		return True
+
+	if ptype == "share" and frappe.get_system_settings("disable_document_sharing"):
+		return False
 
 	meta = frappe.get_meta(doctype)
 
@@ -403,7 +407,7 @@ def get_roles(user=None, with_standard=True):
 	if not user:
 		user = frappe.session.user
 
-	if user == "Guest":
+	if user == "Guest" or not user:
 		return ["Guest"]
 
 	def get():
@@ -414,8 +418,13 @@ def get_roles(user=None, with_standard=True):
 				[
 					r[0]
 					for r in frappe.db.sql(
-						"""select role from `tabHas Role`
-				where parent=%s and role not in ('All', 'Guest')""",
+						"""
+						select role from `tabHas Role`
+						where
+							parenttype='User'
+							and parent=%s
+							and role not in ('All', 'Guest')
+						""",
 						(user,),
 					)
 				]
@@ -614,19 +623,17 @@ def reset_perms(doctype):
 	frappe.db.sql("""delete from `tabCustom DocPerm` where parent=%s""", doctype)
 
 
-def get_linked_doctypes(dt):
-	return list(
-		set(
-			[dt]
-			+ [
-				d.options
-				for d in frappe.get_meta(dt).get(
-					"fields",
-					{"fieldtype": "Link", "ignore_user_permissions": ("!=", 1), "options": ("!=", "[Select]")},
-				)
-			]
+def get_linked_doctypes(dt: str) -> List:
+	meta = frappe.get_meta(dt)
+	linked_doctypes = [dt] + [
+		d.options
+		for d in meta.get(
+			"fields",
+			{"fieldtype": "Link", "ignore_user_permissions": ("!=", 1), "options": ("!=", "[Select]")},
 		)
-	)
+	]
+
+	return list(set(linked_doctypes))
 
 
 def get_doc_name(doc):
