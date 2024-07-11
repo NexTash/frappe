@@ -120,7 +120,8 @@
   "experiences",
   "position",
   "resume",
-  "meta_mask_account"
+  "meta_mask_account",
+  "specialization"
  ],
  "fields": [
   {
@@ -864,6 +865,11 @@
    "fieldname": "meta_mask_account",
    "fieldtype": "Data",
    "label": "Meta mask account"
+  },
+  {
+   "fieldname": "specialization",
+   "fieldtype": "Data",
+   "label": "Specialization"
   }
  ],
  "icon": "fa fa-user",
@@ -926,7 +932,7 @@
    "link_fieldname": "user"
   }
  ],
- "modified": "2024-07-01 02:01:03.748883",
+ "modified": "2024-07-11 01:43:42.961704",
  "modified_by": "Administrator",
  "module": "Core",
  "name": "User",
