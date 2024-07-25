@@ -121,7 +121,8 @@
   "position",
   "resume",
   "meta_mask_account",
-  "specialization"
+  "specialization",
+  "iban"
  ],
  "fields": [
   {
@@ -870,6 +871,11 @@
    "fieldname": "specialization",
    "fieldtype": "Data",
    "label": "Specialization"
+  },
+  {
+   "fieldname": "iban",
+   "fieldtype": "Small Text",
+   "label": "iban"
   }
  ],
  "icon": "fa fa-user",
@@ -932,7 +938,7 @@
    "link_fieldname": "user"
   }
  ],
- "modified": "2024-07-11 01:43:42.961704",
+ "modified": "2024-07-25 05:04:47.315244",
  "modified_by": "Administrator",
  "module": "Core",
  "name": "User",
